@@ -1,0 +1,6 @@
+{
+  "name": "AegisVPN - Public Wi-Fi & Privacy Shield",
+  "description": "Personal VPN suite for securing public Wi-Fi networks and ensuring total online privacy with AI security advisor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
