@@ -1,4 +1,5 @@
 import { 
+  VpnState,
   WifiNetwork, 
   SecurityAuditResult, 
   VpnServer, 
@@ -6,7 +7,11 @@ import {
   VpnProtocol,
   SpeedTestResult,
   SpeedUseCase,
-  SpeedTestPhase
+  SpeedTestPhase,
+  GeoLocation,
+  MapServerNode,
+  TunnelVisualState,
+  ThemeMode
 } from '../types/vpn.ts';
 
 export const DEFAULT_SERVERS: VpnServer[] = [
@@ -811,3 +816,197 @@ export function buildSpeedTestResult(
   };
 }
 
+export interface MiniWidgetStatus {
+  label: string;
+  subLabel: string;
+  theme: 'emerald' | 'amber' | 'rose';
+  pulse: boolean;
+  isConnected: boolean;
+  isConnecting: boolean;
+  isKillSwitch: boolean;
+}
+
+/**
+ * Returns formatted status info for the corner persistent mini-widget
+ */
+export function getMiniWidgetStatus(
+  vpnState: VpnState,
+  server: VpnServer,
+  isKillSwitchEngaged: boolean
+): MiniWidgetStatus {
+  if (isKillSwitchEngaged) {
+    return {
+      label: 'FIREWALL ACTIVE',
+      subLabel: 'Kill Switch: Traffic Blocked',
+      theme: 'rose',
+      pulse: true,
+      isConnected: false,
+      isConnecting: false,
+      isKillSwitch: true,
+    };
+  }
+
+  if (vpnState === 'CONNECTED') {
+    return {
+      label: 'VPN ENCRYPTED',
+      subLabel: `${server.flag} ${server.city}`,
+      theme: 'emerald',
+      pulse: true,
+      isConnected: true,
+      isConnecting: false,
+      isKillSwitch: false,
+    };
+  }
+
+  if (vpnState === 'CONNECTING' || vpnState === 'SECURING_HANDSHAKE') {
+    return {
+      label: 'CONNECTING...',
+      subLabel: `Negotiating with ${server.city}`,
+      theme: 'amber',
+      pulse: true,
+      isConnected: false,
+      isConnecting: true,
+      isKillSwitch: false,
+    };
+  }
+
+  return {
+    label: 'UNPROTECTED',
+    subLabel: 'Public Wi-Fi Exposed',
+    theme: 'rose',
+    pulse: false,
+    isConnected: false,
+    isConnecting: false,
+    isKillSwitch: false,
+  };
+}
+
+export const USER_ORIGIN_LOCATION: GeoLocation = {
+  city: 'San Francisco',
+  country: 'United States',
+  flag: '🇺🇸',
+  ip: '198.51.100.42',
+  coordinates: [37.7749, -122.4194],
+};
+
+/**
+ * Calculates great-circle distance in kilometers between two [lat, lng] coordinates
+ */
+export function calculateGreatCircleDistanceKm(
+  coord1: [number, number],
+  coord2: [number, number]
+): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const R = 6371; // Earth's radius in km
+  const dLat = toRad(coord2[0] - coord1[0]);
+  const dLon = toRad(coord2[1] - coord1[1]);
+  const lat1 = toRad(coord1[0]);
+  const lat2 = toRad(coord2[0]);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return Math.round(R * c);
+}
+
+/**
+ * Converts VpnServer coordinates [lat, lng] into D3 [lng, lat] pairs,
+ * gently offsetting co-located city nodes (e.g., Frankfurt Gaming vs Streaming)
+ * so every server marker remains distinct and clickable on the interactive map.
+ */
+export function getMapServerNodes(servers: VpnServer[]): MapServerNode[] {
+  const seenCounts = new Map<string, number>();
+
+  return servers.map((server) => {
+    const [lat, lng] = server.coordinates;
+    const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+    const count = seenCounts.get(key) || 0;
+    seenCounts.set(key, count + 1);
+
+    // Deterministic radial offset when multiple servers share exact coordinates
+    // (~3.8 deg keeps markers visibly distinct without overlapping hit targets)
+    const angle = count * 2.35;
+    const offset = count === 0 ? 0 : 3.8;
+    const adjustedLng = lng + Math.cos(angle) * offset;
+    const adjustedLat = lat + Math.sin(angle) * offset;
+
+    return {
+      server,
+      lonLat: [adjustedLng, adjustedLat],
+    };
+  });
+}
+
+/**
+ * Determines the visual state of the VPN tunnel connection arc on the D3 map
+ */
+export function getTunnelVisualState(
+  vpnState: VpnState,
+  isKillSwitchEngaged: boolean
+): TunnelVisualState {
+  if (isKillSwitchEngaged) {
+    return {
+      statusLabel: 'TUNNEL SEVERED • KILL SWITCH LOCKED',
+      lineStyle: 'severed',
+      themeColor: 'rose',
+      animatePackets: false,
+      isTunnelActive: false,
+    };
+  }
+
+  if (vpnState === 'CONNECTED') {
+    return {
+      statusLabel: 'TUNNEL ENCRYPTED • PACKET FLOW ACTIVE',
+      lineStyle: 'solid',
+      themeColor: 'emerald',
+      animatePackets: true,
+      isTunnelActive: true,
+    };
+  }
+
+  if (vpnState === 'CONNECTING' || vpnState === 'SECURING_HANDSHAKE') {
+    return {
+      statusLabel:
+        vpnState === 'SECURING_HANDSHAKE'
+          ? 'VERIFYING CRYPTOGRAPHIC HANDSHAKE...'
+          : 'NEGOTIATING ENCRYPTED ROUTE...',
+      lineStyle: 'dashed',
+      themeColor: 'amber',
+      animatePackets: true,
+      isTunnelActive: false,
+    };
+  }
+
+  return {
+    statusLabel: 'STANDBY • ROUTE PREVIEW (UNENCRYPTED)',
+    lineStyle: 'dashed',
+    themeColor: 'cyan',
+    animatePackets: false,
+    isTunnelActive: false,
+  };
+}
+
+export const THEME_STORAGE_KEY = 'stevetool-vpn-theme';
+
+/**
+ * Resolves the initial theme from stored preference, defaulting to Dark Mode (slate-950)
+ */
+export function resolveInitialTheme(storedValue?: string | null): ThemeMode {
+  return storedValue === 'light' ? 'light' : 'dark';
+}
+
+/**
+ * Switches between Dark Mode and Cyber Light mode
+ */
+export function toggleThemeMode(current: ThemeMode): ThemeMode {
+  return current === 'dark' ? 'light' : 'dark';
+}
+
+/**
+ * Returns the display label for the active theme mode
+ */
+export function getThemeLabel(mode: ThemeMode): string {
+  return mode === 'dark' ? 'Dark Mode' : 'Cyber Light';
+}

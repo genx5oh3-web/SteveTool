@@ -10,19 +10,49 @@ import { AutoConnectPromptModal } from './components/AutoConnectPromptModal.tsx'
 import { KillSwitchAlertModal } from './components/KillSwitchAlertModal.tsx';
 import { GlobalNodesTab } from './components/GlobalNodesTab.tsx';
 import { SpeedTestModal } from './components/SpeedTestModal.tsx';
+import { VpnMiniWidget } from './components/VpnMiniWidget.tsx';
 import { 
   VpnState, 
   VpnServer, 
   WifiNetwork, 
   VpnProtocol, 
   SecurityStats,
-  LatencyPoint
+  LatencyPoint,
+  ThemeMode
 } from './types/vpn.ts';
-import { DEFAULT_SERVERS, INITIAL_WIFI_NETWORKS } from './utils/vpnLogic.ts';
+import { 
+  DEFAULT_SERVERS, 
+  INITIAL_WIFI_NETWORKS,
+  THEME_STORAGE_KEY,
+  resolveInitialTheme,
+  toggleThemeMode
+} from './utils/vpnLogic.ts';
 
 export default function App() {
-  // Navigation
+  // Navigation & Theme
   const [activeTab, setActiveTab] = useState<'dashboard' | 'servers' | 'wifi' | 'leak-test' | 'ai-advisor'>('dashboard');
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    try {
+      return resolveInitialTheme(localStorage.getItem(THEME_STORAGE_KEY));
+    } catch {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('dark', theme === 'dark');
+    root.dataset.theme = theme;
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Ignore storage errors in restricted environments
+    }
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => toggleThemeMode(prev));
+  };
 
   // VPN Connection State
   const [vpnState, setVpnState] = useState<VpnState>('DISCONNECTED');
@@ -221,7 +251,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 selection:bg-cyan-500/20 dark:selection:bg-cyan-500/30 selection:text-cyan-900 dark:selection:text-cyan-200">
       {/* Top Navigation Header */}
       <Header
         vpnState={vpnState}
@@ -233,6 +263,8 @@ export default function App() {
         currentWifi={currentWifi}
         autoConnectEnabled={autoConnectEnabled}
         onOpenConfigModal={() => setIsConfigModalOpen(true)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Main App Body */}
@@ -259,6 +291,8 @@ export default function App() {
             securityStats={securityStats}
             latencyData={latencyData}
             onOpenSpeedTest={() => setIsSpeedTestOpen(true)}
+            onSelectServer={handleSelectServer}
+            theme={theme}
           />
         )}
 
@@ -308,6 +342,19 @@ export default function App() {
         )}
       </main>
 
+      {/* Persistent Mini-Widget when main dashboard is inactive */}
+      {activeTab !== 'dashboard' && (
+        <VpnMiniWidget
+          vpnState={vpnState}
+          selectedServer={selectedServer}
+          activeProtocol={activeProtocol}
+          isKillSwitchEngaged={isKillSwitchEngaged}
+          onToggleConnect={handleToggleConnect}
+          onNavigateToDashboard={() => setActiveTab('dashboard')}
+          latencyData={latencyData}
+        />
+      )}
+
       {/* Modals & Overlays */}
       <ServerSelectorModal
         isOpen={isServerModalOpen}
@@ -344,6 +391,7 @@ export default function App() {
         server={selectedServer}
         isConnected={vpnState === 'CONNECTED'}
         protocol={activeProtocol}
+        theme={theme}
         onAskAi={(prompt) => {
           setStagedAiPrompt(prompt);
           setActiveTab('ai-advisor');
@@ -351,10 +399,10 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500 font-mono">
+      <footer className="border-t border-slate-200 dark:border-slate-900 bg-white/80 dark:bg-slate-950 py-4 text-center text-xs text-slate-600 dark:text-slate-500 font-mono transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>SteveTool-VPN • Zero-Logs RAM Architecture • ChaCha20-Poly1305 / AES-256</span>
-          <span className="text-slate-600">Encrypted Tunnel Active on Port 51820</span>
+          <span className="text-slate-500 dark:text-slate-600">Encrypted Tunnel Active on Port 51820</span>
         </div>
       </footer>
     </div>

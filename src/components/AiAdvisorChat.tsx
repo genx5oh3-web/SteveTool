@@ -150,21 +150,21 @@ export const AiAdvisorChat: React.FC<AiAdvisorChatProps> = ({
   };
 
   return (
-    <div className="bg-slate-900/70 border border-slate-800/80 rounded-3xl overflow-hidden backdrop-blur-sm flex flex-col h-[750px] shadow-2xl">
+    <div className="bg-white/95 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/80 rounded-3xl overflow-hidden backdrop-blur-sm flex flex-col h-[750px] shadow-xl dark:shadow-2xl">
       {/* Chat Header */}
-      <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-slate-950 shadow-md shadow-cyan-500/20">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-600 to-indigo-600 dark:from-cyan-500 dark:to-indigo-600 flex items-center justify-center text-white dark:text-slate-950 shadow-md shadow-cyan-500/20">
             <Bot className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-sm font-bold text-slate-100">CyberShield AI</h2>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">CyberShield AI</h2>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30">
                 gemini-3.8-flash
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400">
               Public Wi-Fi Threat Analyst & Cryptographic Security Specialist
             </p>
           </div>
@@ -172,13 +172,13 @@ export const AiAdvisorChat: React.FC<AiAdvisorChatProps> = ({
 
         {/* Live Context Indicators & Clear */}
         <div className="flex items-center space-x-2">
-          <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">
-            <Wifi className="w-3 h-3 text-cyan-400" />
+          <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-mono text-slate-600 dark:text-slate-400">
+            <Wifi className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
             <span className="truncate max-w-[120px]">{currentWifi.ssid}</span>
           </div>
           <button
             onClick={handleClearChat}
-            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-xl transition-colors"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 rounded-xl transition-colors"
             title="Reset conversation"
             aria-label="Clear chat history"
           >
@@ -188,10 +188,10 @@ export const AiAdvisorChat: React.FC<AiAdvisorChatProps> = ({
       </div>
 
       {/* Context Banner */}
-      <div className="px-4 py-2 bg-slate-950/90 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+      <div className="px-4 py-2 bg-slate-100/80 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-600 dark:text-slate-400">
         <div className="flex items-center space-x-3">
           <span className="flex items-center space-x-1">
-            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-rose-400 animate-pulse'}`} />
+            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-rose-500 dark:bg-rose-400 animate-pulse'}`} />
             <span>VPN: {isConnected ? 'SECURE' : 'DISCONNECTED'}</span>
           </span>
           <span>•</span>
@@ -213,23 +213,25 @@ export const AiAdvisorChat: React.FC<AiAdvisorChatProps> = ({
             >
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                 isUser 
-                  ? 'bg-slate-800 text-cyan-400 border border-slate-700' 
-                  : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                  ? 'bg-slate-200 dark:bg-slate-800 text-cyan-700 dark:text-cyan-400 border border-slate-300 dark:border-slate-700' 
+                  : 'bg-cyan-50 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30'
               }`}>
                 {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
               </div>
 
               <div className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
                 isUser
-                  ? 'bg-cyan-600 text-slate-950 font-medium rounded-tr-none'
-                  : 'bg-slate-950/80 text-slate-200 border border-slate-800/80 rounded-tl-none shadow-sm'
+                  ? 'bg-cyan-600 text-white dark:text-slate-950 font-medium rounded-tr-none shadow-sm'
+                  : 'bg-slate-50 dark:bg-slate-950/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800/80 rounded-tl-none shadow-sm'
               }`}>
                 {/* Render formatted message content */}
-                <div className="prose prose-invert prose-xs max-w-none space-y-2 whitespace-pre-wrap">
+                <div className={`prose dark:prose-invert prose-xs max-w-none space-y-2 whitespace-pre-wrap ${
+                  isUser ? 'text-white dark:text-slate-950' : ''
+                }`}>
                   {message.text}
                 </div>
                 <span className={`block text-[10px] font-mono mt-2 ${
-                  isUser ? 'text-cyan-950/70 text-right' : 'text-slate-500'
+                  isUser ? 'text-cyan-100 dark:text-cyan-950/70 text-right' : 'text-slate-500'
                 }`}>
                   {message.timestamp}
                 </span>
@@ -240,11 +242,11 @@ export const AiAdvisorChat: React.FC<AiAdvisorChatProps> = ({
 
         {isLoading && (
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30 flex items-center justify-center shrink-0">
               <Bot className="w-4 h-4 animate-spin" />
             </div>
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl rounded-tl-none p-4 text-xs text-slate-400 flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-cyan-400 animate-spin" />
+            <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl rounded-tl-none p-4 text-xs text-slate-600 dark:text-slate-400 flex items-center space-x-2">
+              <Sparkles className="w-4 h-4 text-cyan-600 dark:text-cyan-400 animate-spin" />
               <span>CyberShield AI analyzing threat vector & formulating advice...</span>
             </div>
           </div>
@@ -254,7 +256,7 @@ export const AiAdvisorChat: React.FC<AiAdvisorChatProps> = ({
       </div>
 
       {/* Suggested Quick Prompt Chips */}
-      <div className="p-3 border-t border-slate-800/60 bg-slate-950/40">
+      <div className="p-3 border-t border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-950/40">
         <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none text-[11px]">
           <span className="text-slate-500 whitespace-nowrap font-mono">Suggested:</span>
           {SUGGESTIONS.map((suggestion, i) => (
@@ -262,7 +264,7 @@ export const AiAdvisorChat: React.FC<AiAdvisorChatProps> = ({
               key={i}
               onClick={() => handleSendMessage(suggestion)}
               disabled={isLoading}
-              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-slate-700/60 whitespace-nowrap transition-colors"
+              className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-cyan-300 border border-slate-200 dark:border-slate-700/60 whitespace-nowrap transition-colors"
             >
               {suggestion}
             </button>
@@ -271,7 +273,7 @@ export const AiAdvisorChat: React.FC<AiAdvisorChatProps> = ({
       </div>
 
       {/* Input Box */}
-      <div className="p-4 border-t border-slate-800 bg-slate-950/80">
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -285,12 +287,12 @@ export const AiAdvisorChat: React.FC<AiAdvisorChatProps> = ({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask CyberShield AI about public Wi-Fi security, Kill Switch, MITM defense..."
             disabled={isLoading}
-            className="flex-1 px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+            className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
           />
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 text-slate-950 disabled:text-slate-600 rounded-xl font-bold text-xs transition-colors flex items-center space-x-1.5"
+            className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 dark:bg-cyan-500 dark:hover:bg-cyan-400 disabled:bg-slate-200 dark:disabled:bg-slate-800 text-white dark:text-slate-950 disabled:text-slate-400 dark:disabled:text-slate-600 rounded-xl font-bold text-xs transition-colors flex items-center space-x-1.5"
             aria-label="Send message to AI"
           >
             <span>Send</span>

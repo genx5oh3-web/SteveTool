@@ -11,6 +11,14 @@ import {
   calculateSpeedGrade,
   generateSpeedTestProfile,
   buildSpeedTestResult,
+  getMiniWidgetStatus,
+  USER_ORIGIN_LOCATION,
+  calculateGreatCircleDistanceKm,
+  getMapServerNodes,
+  getTunnelVisualState,
+  resolveInitialTheme,
+  toggleThemeMode,
+  getThemeLabel,
   DEFAULT_SERVERS,
   INITIAL_WIFI_NETWORKS,
 } from './vpnLogic.ts';
@@ -166,3 +174,95 @@ test('buildSpeedTestResult packages complete diagnostic result with use-cases an
   assert.ok(diagnostic.testedAt.length > 0);
 });
 
+test('getMiniWidgetStatus accurately reports status across connection lifecycle', () => {
+  const server = DEFAULT_SERVERS[0]; // Zurich
+
+  // 1. Connected
+  const connectedStatus = getMiniWidgetStatus('CONNECTED', server, false);
+  assert.equal(connectedStatus.label, 'VPN ENCRYPTED');
+  assert.equal(connectedStatus.theme, 'emerald');
+  assert.equal(connectedStatus.isConnected, true);
+  assert.ok(connectedStatus.subLabel.includes('Zurich'));
+
+  // 2. Disconnected
+  const disconnectedStatus = getMiniWidgetStatus('DISCONNECTED', server, false);
+  assert.equal(disconnectedStatus.label, 'UNPROTECTED');
+  assert.equal(disconnectedStatus.theme, 'rose');
+  assert.equal(disconnectedStatus.isConnected, false);
+
+  // 3. Connecting / Handshake
+  const connectingStatus = getMiniWidgetStatus('CONNECTING', server, false);
+  assert.equal(connectingStatus.label, 'CONNECTING...');
+  assert.equal(connectingStatus.theme, 'amber');
+  assert.equal(connectingStatus.isConnecting, true);
+
+  // 4. Kill Switch active
+  const killSwitchStatus = getMiniWidgetStatus('DISCONNECTED', server, true);
+  assert.equal(killSwitchStatus.label, 'FIREWALL ACTIVE');
+  assert.equal(killSwitchStatus.theme, 'rose');
+  assert.equal(killSwitchStatus.isKillSwitch, true);
+});
+
+test('calculateGreatCircleDistanceKm computes realistic trans-oceanic geodesic distance', () => {
+  const sfToZurich = calculateGreatCircleDistanceKm(
+    USER_ORIGIN_LOCATION.coordinates,
+    DEFAULT_SERVERS[0].coordinates // Zurich [47.3769, 8.5417]
+  );
+  // Real-world SF to Zurich great-circle distance is ~9,370 km
+  assert.ok(sfToZurich > 9000 && sfToZurich < 9800, `Expected ~9370km, got ${sfToZurich}`);
+
+  const samePoint = calculateGreatCircleDistanceKm([37.7749, -122.4194], [37.7749, -122.4194]);
+  assert.equal(samePoint, 0);
+});
+
+test('getMapServerNodes maps all servers to [lng, lat] and offsets co-located city markers', () => {
+  const nodes = getMapServerNodes(DEFAULT_SERVERS);
+  assert.equal(nodes.length, DEFAULT_SERVERS.length);
+
+  // Verify [lng, lat] ordering for Zurich (lat ~47.37, lng ~8.54)
+  const zurichNode = nodes.find(n => n.server.id === 'ch-zurich-01');
+  assert.ok(zurichNode);
+  assert.ok(zurichNode.lonLat[0] < 15 && zurichNode.lonLat[1] > 40);
+
+  // Verify co-located Frankfurt nodes do not overlap identically
+  const frankfurtNodes = nodes.filter(n => n.server.city === 'Frankfurt');
+  assert.equal(frankfurtNodes.length, 2);
+  assert.notDeepEqual(frankfurtNodes[0].lonLat, frankfurtNodes[1].lonLat);
+});
+
+test('getTunnelVisualState maps VPN states and Kill Switch to distinct map line styles', () => {
+  const connected = getTunnelVisualState('CONNECTED', false);
+  assert.equal(connected.lineStyle, 'solid');
+  assert.equal(connected.themeColor, 'emerald');
+  assert.equal(connected.animatePackets, true);
+  assert.equal(connected.isTunnelActive, true);
+
+  const standby = getTunnelVisualState('DISCONNECTED', false);
+  assert.equal(standby.lineStyle, 'dashed');
+  assert.equal(standby.themeColor, 'cyan');
+  assert.equal(standby.animatePackets, false);
+
+  const handshake = getTunnelVisualState('SECURING_HANDSHAKE', false);
+  assert.equal(handshake.lineStyle, 'dashed');
+  assert.equal(handshake.themeColor, 'amber');
+  assert.equal(handshake.animatePackets, true);
+
+  const severed = getTunnelVisualState('DISCONNECTED', true);
+  assert.equal(severed.lineStyle, 'severed');
+  assert.equal(severed.themeColor, 'rose');
+  assert.equal(severed.animatePackets, false);
+});
+
+test('theme helpers resolve, toggle, and label Dark Mode and Cyber Light cleanly', () => {
+  assert.equal(resolveInitialTheme(null), 'dark');
+  assert.equal(resolveInitialTheme(undefined), 'dark');
+  assert.equal(resolveInitialTheme('dark'), 'dark');
+  assert.equal(resolveInitialTheme('unexpected'), 'dark');
+  assert.equal(resolveInitialTheme('light'), 'light');
+
+  assert.equal(toggleThemeMode('dark'), 'light');
+  assert.equal(toggleThemeMode('light'), 'dark');
+
+  assert.equal(getThemeLabel('dark'), 'Dark Mode');
+  assert.equal(getThemeLabel('light'), 'Cyber Light');
+});

@@ -125,3 +125,25 @@ export interface SpeedTestResult {
   testedAt: string;
 }
 
+export interface GeoLocation {
+  city: string;
+  country: string;
+  flag: string;
+  ip: string;
+  coordinates: [number, number]; // [lat, lng]
+}
+
+export interface MapServerNode {
+  server: VpnServer;
+  lonLat: [number, number]; // [lng, lat] for D3 GeoJSON/projection
+}
+
+export interface TunnelVisualState {
+  statusLabel: string;
+  lineStyle: 'solid' | 'dashed' | 'severed';
+  themeColor: 'emerald' | 'amber' | 'rose' | 'cyan';
+  animatePackets: boolean;
+  isTunnelActive: boolean;
+}
+
+export type ThemeMode = 'dark' | 'light';
